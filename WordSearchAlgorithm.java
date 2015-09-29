@@ -4,6 +4,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
 
+import javax.swing.JOptionPane;
+
 /**
  * Program that solves word search files
  * 
@@ -13,14 +15,14 @@ import java.util.Arrays;
  */
 public class WordSearchAlgorithm {
 
-	private static final int LEFT = 76;
-	private static final int RIGHT = 77;
-	private static final int UP = 78;
-	private static final int DOWN = 79;
+	private static final int LEFT = 1;
+	private static final int RIGHT = 3;
+	private static final int UP = 6;
+	private static final int DOWN = 10;
 	private static final int FAIL = 0;
 
 	public static void main(String[] args) throws IOException {
-		File file = new File("test.txt");
+		File file = new File(JOptionPane.showInputDialog("Enter the file name: (include '.txt'): "));
 		BufferedReader in = new BufferedReader(new FileReader(file));
 
 		String[] read = null;
@@ -100,11 +102,13 @@ public class WordSearchAlgorithm {
 	private static char[][] findWord(String word, char[][] grid, char[][] originalGrid) {
 		char firstChar = word.charAt(0);
 
-		for (int row = 0; row < grid.length; row++) {
-			for (int col = 0; col < grid[row].length; col++) {
+		int direction = FAIL;
+		for (int row = 0; direction == FAIL && row < grid.length; row++) {
+			for (int col = 0; direction == FAIL && col < grid[row].length; col++) {
 				if (originalGrid[row][col] == firstChar) {
-					grid = capitalizeWord(grid, originalGrid, word.length(), row, col,
-							search(word, grid, originalGrid, row, col));
+					direction = search(word, grid, originalGrid, row, col);
+					if (direction != FAIL)
+						grid = capitalizeWord(grid, originalGrid, word.length(), row, col, direction);
 				}
 			}
 		}
