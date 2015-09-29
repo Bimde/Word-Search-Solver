@@ -97,15 +97,7 @@ public class WordSearchAlgorithm {
 		for (int row = 0; row < grid.length; row++) {
 			for (int col = 0; col < grid[row].length; col++) {
 				if (grid[row][col] == firstChar) {
-					if (searchLeft(word, grid, row, col)) {
-						grid = updateGrid(grid, word.length(), row, col, LEFT);
-					} else if (searchRight(word, grid, row, col)) {
-						grid = updateGrid(grid, word.length(), row, col, RIGHT);
-					} else if (searchUp(word, grid, row, col)) {
-						grid = updateGrid(grid, word.length(), row, col, UP);
-					} else if (searchDown(word, grid, row, col)) {
-						grid = updateGrid(grid, word.length(), row, col, DOWN);
-					}
+					grid = updateGrid(grid, word.length(), row, col, search(word, grid, row, col));
 				}
 			}
 		}
@@ -129,8 +121,95 @@ public class WordSearchAlgorithm {
 			for (int pos = 0; pos < length; pos++) {
 				grid[row + pos][col] = (char) (grid[row + pos][col] - 32);
 			}
+		} else if (direction == UP + LEFT) {
+			for (int pos = 0; pos < length; pos++) {
+				grid[row - pos][col - pos] = (char) (grid[row - pos][col - pos] - 32);
+			}
+		} else if (direction == UP + RIGHT) {
+			for (int pos = 0; pos < length; pos++) {
+				grid[row - pos][col + pos] = (char) (grid[row - pos][col + pos] - 32);
+			}
+		} else if (direction == DOWN + LEFT) {
+			for (int pos = 0; pos < length; pos++) {
+				grid[row + pos][col - pos] = (char) (grid[row + pos][col - pos] - 32);
+			}
+		} else if (direction == DOWN + RIGHT) {
+			for (int pos = 0; pos < length; pos++) {
+				grid[row + pos][col + pos] = (char) (grid[row + pos][col + pos] - 32);
+			}
 		}
 		return grid;
+	}
+
+	private static int search(String word, char[][] grid, int row, int col) {
+		if (searchLeft(word, grid, row, col)) {
+			return LEFT;
+		} else if (searchRight(word, grid, row, col)) {
+			return RIGHT;
+		} else if (searchUp(word, grid, row, col)) {
+			return UP;
+		} else if (searchDown(word, grid, row, col)) {
+			return DOWN;
+		} else if (searchUpLeft(word, grid, row, col)) {
+			return UP + LEFT;
+		} else if (searchUpRight(word, grid, row, col)) {
+			return UP + RIGHT;
+		} else if (searchDownLeft(word, grid, row, col)) {
+			return DOWN + LEFT;
+		} else if (searchDownRight(word, grid, row, col)) {
+			return DOWN + RIGHT;
+		}
+
+		return 0;
+
+	}
+
+	private static boolean searchUpLeft(String word, char[][] grid, int row, int col) {
+		int length = word.length();
+		if (col - (length - 1) < 0 || row - (length - 1) < 0)
+			return false;
+		for (int i = 1; i < length; i++) {
+			if (word.charAt(i) != grid[row - i][col - i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static boolean searchDownRight(String word, char[][] grid, int row, int col) {
+		int length = word.length();
+		if (col + (length - 1) >= grid[row].length || row + (length - 1) >= grid.length)
+			return false;
+		for (int i = 1; i < length; i++) {
+			if (word.charAt(i) != grid[row + i][col + i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static boolean searchUpRight(String word, char[][] grid, int row, int col) {
+		int length = word.length();
+		if (col + (length - 1) >= grid[row].length || row - (length - 1) < 0)
+			return false;
+		for (int i = 1; i < length; i++) {
+			if (word.charAt(i) != grid[row - i][col + i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static boolean searchDownLeft(String word, char[][] grid, int row, int col) {
+		int length = word.length();
+		if (col - (length - 1) < 0 || row + (length - 1) >= grid.length)
+			return false;
+		for (int i = 1; i < length; i++) {
+			if (word.charAt(i) != grid[row + i][col - i]) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static boolean searchLeft(String word, char[][] grid, int row, int col) {
