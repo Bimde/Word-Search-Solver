@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Program that solves word search files
@@ -16,6 +17,7 @@ public class WordSearchAlgorithm {
 	private static final int RIGHT = 77;
 	private static final int UP = 78;
 	private static final int DOWN = 79;
+	private static final int FAIL = 0;
 
 	public static void main(String[] args) throws IOException {
 		File file = new File("test.txt");
@@ -85,82 +87,98 @@ public class WordSearchAlgorithm {
 	}
 
 	static char[][] solveWordSearch(char[][] grid, String[] words) {
+		char[][] originalGrid = Arrays.copyOf(grid, grid.length);
+		for (int array = 0; array < grid.length; array++) {
+			originalGrid[array] = Arrays.copyOf(grid[array], grid[array].length);
+		}
 		for (String word : words) {
-			grid = findWord(word, grid);
+			grid = findWord(word, grid, originalGrid);
 		}
 		return grid;
 	}
 
-	private static char[][] findWord(String word, char[][] grid) {
+	private static char[][] findWord(String word, char[][] grid, char[][] originalGrid) {
 		char firstChar = word.charAt(0);
 
 		for (int row = 0; row < grid.length; row++) {
 			for (int col = 0; col < grid[row].length; col++) {
-				if (grid[row][col] == firstChar) {
-					grid = updateGrid(grid, word.length(), row, col, search(word, grid, row, col));
+				if (originalGrid[row][col] == firstChar) {
+					grid = capitalizeWord(grid, originalGrid, word.length(), row, col,
+							search(word, grid, originalGrid, row, col));
 				}
 			}
 		}
 		return grid;
 	}
 
-	private static char[][] updateGrid(char[][] grid, int length, int row, int col, int direction) {
+	private static char[][] capitalizeWord(char[][] grid, char[][] originalGrid, int length, int row, int col,
+			int direction) {
+		if (direction == FAIL)
+			return grid;
 		if (direction == LEFT) {
 			for (int pos = 0; pos < length; pos++) {
-				grid[row][col - pos] = (char) (grid[row][col - pos] - 32);
+				if (originalGrid[row][col - pos] == grid[row][col - pos])
+					grid[row][col - pos] = (char) (grid[row][col - pos] - 32);
 			}
 		} else if (direction == RIGHT) {
 			for (int pos = 0; pos < length; pos++) {
-				grid[row][col + pos] = (char) (grid[row][col + pos] - 32);
+				if (originalGrid[row][col + pos] == grid[row][col + pos])
+					grid[row][col + pos] = (char) (grid[row][col + pos] - 32);
 			}
 		} else if (direction == UP) {
 			for (int pos = 0; pos < length; pos++) {
-				grid[row - pos][col] = (char) (grid[row - pos][col] - 32);
+				if (originalGrid[row - pos][col] == grid[row - pos][col])
+					grid[row - pos][col] = (char) (grid[row - pos][col] - 32);
 			}
 		} else if (direction == DOWN) {
 			for (int pos = 0; pos < length; pos++) {
-				grid[row + pos][col] = (char) (grid[row + pos][col] - 32);
+				if (originalGrid[row + pos][col] == grid[row + pos][col])
+					grid[row + pos][col] = (char) (grid[row + pos][col] - 32);
 			}
 		} else if (direction == UP + LEFT) {
 			for (int pos = 0; pos < length; pos++) {
-				grid[row - pos][col - pos] = (char) (grid[row - pos][col - pos] - 32);
+				if (originalGrid[row - pos][col - pos] == grid[row - pos][col - pos])
+					grid[row - pos][col - pos] = (char) (grid[row - pos][col - pos] - 32);
 			}
 		} else if (direction == UP + RIGHT) {
 			for (int pos = 0; pos < length; pos++) {
-				grid[row - pos][col + pos] = (char) (grid[row - pos][col + pos] - 32);
+				if (originalGrid[row - pos][col + pos] == grid[row - pos][col + pos])
+					grid[row - pos][col + pos] = (char) (grid[row - pos][col + pos] - 32);
 			}
 		} else if (direction == DOWN + LEFT) {
 			for (int pos = 0; pos < length; pos++) {
-				grid[row + pos][col - pos] = (char) (grid[row + pos][col - pos] - 32);
+				if (originalGrid[row + pos][col - pos] == grid[row + pos][col - pos])
+					grid[row + pos][col - pos] = (char) (grid[row + pos][col - pos] - 32);
 			}
 		} else if (direction == DOWN + RIGHT) {
 			for (int pos = 0; pos < length; pos++) {
-				grid[row + pos][col + pos] = (char) (grid[row + pos][col + pos] - 32);
+				if (originalGrid[row + pos][col + pos] == grid[row + pos][col + pos])
+					grid[row + pos][col + pos] = (char) (grid[row + pos][col + pos] - 32);
 			}
 		}
 		return grid;
 	}
 
-	private static int search(String word, char[][] grid, int row, int col) {
-		if (searchLeft(word, grid, row, col)) {
+	private static int search(String word, char[][] grid, char[][] originalGrid, int row, int col) {
+		if (searchLeft(word, originalGrid, row, col)) {
 			return LEFT;
-		} else if (searchRight(word, grid, row, col)) {
+		} else if (searchRight(word, originalGrid, row, col)) {
 			return RIGHT;
-		} else if (searchUp(word, grid, row, col)) {
+		} else if (searchUp(word, originalGrid, row, col)) {
 			return UP;
-		} else if (searchDown(word, grid, row, col)) {
+		} else if (searchDown(word, originalGrid, row, col)) {
 			return DOWN;
-		} else if (searchUpLeft(word, grid, row, col)) {
+		} else if (searchUpLeft(word, originalGrid, row, col)) {
 			return UP + LEFT;
-		} else if (searchUpRight(word, grid, row, col)) {
+		} else if (searchUpRight(word, originalGrid, row, col)) {
 			return UP + RIGHT;
-		} else if (searchDownLeft(word, grid, row, col)) {
+		} else if (searchDownLeft(word, originalGrid, row, col)) {
 			return DOWN + LEFT;
-		} else if (searchDownRight(word, grid, row, col)) {
+		} else if (searchDownRight(word, originalGrid, row, col)) {
 			return DOWN + RIGHT;
 		}
 
-		return 0;
+		return FAIL;
 
 	}
 
