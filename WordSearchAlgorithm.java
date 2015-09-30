@@ -1,13 +1,16 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Arrays;
 
 import javax.swing.JOptionPane;
 
 /**
- * Program that solves word search files
+ * Program that solves word search files and outputs the completed word search
+ * in a text file of your choice
  * 
  * @author Bimesh De Silva
  * @version September 2015
@@ -15,18 +18,41 @@ import javax.swing.JOptionPane;
  */
 public class WordSearchAlgorithm {
 
+	// Turn on and off status messages (SEVERELY decreases efficiency)
+	private static final boolean DISPLAY_STATUS = true;
+
+	// Static variables to represent directions words could be found in
 	private static final int LEFT = 1;
-	private static final int RIGHT = 3;
-	private static final int UP = 6;
-	private static final int DOWN = 10;
-	private static final int FAIL = 0;
+	private static final int RIGHT = 2;
+	private static final int UP = 3;
+	private static final int DOWN = 4;
+	private static final int UP_LEFT = 5;
+	private static final int UP_RIGHT = 6;
+	private static final int DOWN_LEFT = 7;
+	private static final int DOWN_RIGHT = 8;
+	private static final int NOT_FOUND = 0;
+
+	// Static variables to keep track of the number of words found and not found
 	private static int wordsFound = 0;
 	private static int wordsNotFound = 0;
 
 	public static void main(String[] args) throws IOException {
+
+		// Allow the user to enter the file name
 		File file = new File(JOptionPane.showInputDialog("Enter the file name: (include '.txt'): "));
+		while (file == null || !file.isFile()) {
+			file = new File(JOptionPane
+					.showInputDialog("The file entered was invalid!\nEnter the file name: (include '.txt'): "));
+		}
+		long timeStart = System.currentTimeMillis();
+		String output = JOptionPane.showInputDialog("Enter the name of the desired output file (ex. 'output.txt'): ");
+		while (output == null || output.equals("")) {
+			output = JOptionPane.showInputDialog(
+					"Please enter a valid file name! Enter the name of the desired output file (ex. 'output.txt'): ");
+		}
 		BufferedReader in = new BufferedReader(new FileReader(file));
 
+		// Count the number of words and find the width of the array
 		String[] read = null;
 		try {
 			read = in.readLine().split("\\s+");
@@ -42,6 +68,7 @@ public class WordSearchAlgorithm {
 		}
 		int numOfLines = read.length;
 
+		// Store the words to find in an array
 		char[][] grid = new char[numOfLines][numOfLines];
 		String[] chars = null;
 		in.close();
@@ -51,8 +78,7 @@ public class WordSearchAlgorithm {
 			words[word] = in.readLine().toLowerCase();
 		}
 
-		// ADD check for corrupted file (dif num of rows / columns) using
-		// fileCorrupted method
+		// Store the word search grid in a 2-D array
 		for (int row = 0; row < numOfLines; row++) {
 			chars = in.readLine().split("\\s+");
 			for (int col = 0; col < chars.length; col++) {
@@ -60,22 +86,12 @@ public class WordSearchAlgorithm {
 			}
 		}
 
-		long timeStart = System.currentTimeMillis();
+		// Pass the grid and the words to the word search solving method
 		grid = solveWordSearch(grid, words);
-		printGrid(grid);
+		saveGrid(output, grid);
 		JOptionPane.showMessageDialog(null, "Word Search Solved: \n" + (System.currentTimeMillis() - timeStart) / 1000.0
 				+ " secs\n" + wordsFound + " words were found!\n" + wordsNotFound + " words were NOT found!");
 
-	}
-
-	/**
-	 * ADD THIS METHOD Checks to see if a file is corrupted
-	 * 
-	 * @param file
-	 * @return
-	 */
-	static boolean fileCorrupted(File file) {
-		return false;
 	}
 
 	/**
@@ -84,7 +100,7 @@ public class WordSearchAlgorithm {
 	 * @param grid
 	 *            The char grid to print out
 	 */
-	static void printGrid(char[][] grid) {
+	public static void printGrid(char[][] grid) {
 		for (int row = 0; row < grid.length; row++) {
 			for (int col = 0; col < grid[row].length; col++) {
 				System.out.print(grid[row][col] + " ");
@@ -93,7 +109,35 @@ public class WordSearchAlgorithm {
 		}
 	}
 
-	static char[][] solveWordSearch(char[][] grid, String[] words) {
+	/**
+	 * Saves the grid into a specified output file
+	 * 
+	 * @param grid
+	 *            The char grid to print out
+	 * @throws IOException
+	 */
+	public static void saveGrid(String fileName, char[][] grid) throws IOException {
+		File file = new File(fileName);
+		PrintWriter writer = new PrintWriter(new FileWriter(file));
+		for (int row = 0; row < grid.length; row++) {
+			for (int col = 0; col < grid[row].length; col++) {
+				writer.print(grid[row][col] + " ");
+			}
+			writer.println();
+		}
+		writer.close();
+	}
+
+	/**
+	 * Solve word search by looping through each of the provided words
+	 * 
+	 * @param grid
+	 *            The word search grid
+	 * @param words
+	 *            The words to find
+	 * @return The completed word search with capitalized words
+	 */
+	public static char[][] solveWordSearch(char[][] grid, String[] words) {
 		char[][] originalGrid = Arrays.copyOf(grid, grid.length);
 		for (int array = 0; array < grid.length; array++) {
 			originalGrid[array] = Arrays.copyOf(grid[array], grid[array].length);
@@ -104,25 +148,58 @@ public class WordSearchAlgorithm {
 		return grid;
 	}
 
-	private static char[][] findWord(String word, char[][] grid, char[][] originalGrid) {
+	/**
+	 * Find the specified word in the provided grid of characters
+	 * 
+	 * @param word
+	 *            The word to find
+	 * @param grid
+	 *            The grid of characters to change once the word is found
+	 * @param originalGrid
+	 *            The grid of characters to find the word in
+	 * @return The grid after capitalizing the specified word
+	 */
+	public static char[][] findWord(String word, char[][] grid, char[][] originalGrid) {
 		char firstChar = word.charAt(0);
+		if (DISPLAY_STATUS)
+			System.out.println(word);
 
-		int direction = FAIL;
-		for (int row = 0; direction == FAIL && row < grid.length; row++) {
-			for (int col = 0; direction == FAIL && col < grid[row].length; col++) {
+		for (int row = 0; row < grid.length; row++) {
+			for (int col = 0; col < grid[row].length; col++) {
 				if (originalGrid[row][col] == firstChar) {
-					direction = search(word, grid, originalGrid, row, col);
-					if (direction != FAIL)
+					int direction = search(word, originalGrid, row, col);
+					if (direction != NOT_FOUND) {
 						grid = capitalizeWord(grid, originalGrid, word.length(), row, col, direction);
+						return grid;
+					}
 				}
 			}
 		}
 		return grid;
 	}
 
-	private static char[][] capitalizeWord(char[][] grid, char[][] originalGrid, int length, int row, int col,
+	/**
+	 * Capitalize text in the grid using provided starting point, direction, and
+	 * distance
+	 * 
+	 * @param grid
+	 *            The grid to capitalize the word in
+	 * @param originalGrid
+	 *            The unchanged grid to compare the mutable grid to
+	 * @param length
+	 *            The length of the word (or text) to capitalize
+	 * @param row
+	 *            The starting row of the text
+	 * @param col
+	 *            The starting row of the text
+	 * @param direction
+	 *            The direction that the text continues from the starting row
+	 *            and column
+	 * @return The grid with the capitalized word
+	 */
+	public static char[][] capitalizeWord(char[][] grid, char[][] originalGrid, int length, int row, int col,
 			int direction) {
-		if (direction == FAIL) {
+		if (direction == NOT_FOUND) {
 			wordsNotFound++;
 			return grid;
 		}
@@ -147,22 +224,22 @@ public class WordSearchAlgorithm {
 				if (originalGrid[row + pos][col] == grid[row + pos][col])
 					grid[row + pos][col] = (char) (grid[row + pos][col] - 32);
 			}
-		} else if (direction == UP + LEFT) {
+		} else if (direction == UP_LEFT) {
 			for (int pos = 0; pos < length; pos++) {
 				if (originalGrid[row - pos][col - pos] == grid[row - pos][col - pos])
 					grid[row - pos][col - pos] = (char) (grid[row - pos][col - pos] - 32);
 			}
-		} else if (direction == UP + RIGHT) {
+		} else if (direction == UP_RIGHT) {
 			for (int pos = 0; pos < length; pos++) {
 				if (originalGrid[row - pos][col + pos] == grid[row - pos][col + pos])
 					grid[row - pos][col + pos] = (char) (grid[row - pos][col + pos] - 32);
 			}
-		} else if (direction == DOWN + LEFT) {
+		} else if (direction == DOWN_LEFT) {
 			for (int pos = 0; pos < length; pos++) {
 				if (originalGrid[row + pos][col - pos] == grid[row + pos][col - pos])
 					grid[row + pos][col - pos] = (char) (grid[row + pos][col - pos] - 32);
 			}
-		} else if (direction == DOWN + RIGHT) {
+		} else if (direction == DOWN_RIGHT) {
 			for (int pos = 0; pos < length; pos++) {
 				if (originalGrid[row + pos][col + pos] == grid[row + pos][col + pos])
 					grid[row + pos][col + pos] = (char) (grid[row + pos][col + pos] - 32);
@@ -171,7 +248,21 @@ public class WordSearchAlgorithm {
 		return grid;
 	}
 
-	private static int search(String word, char[][] grid, char[][] originalGrid, int row, int col) {
+	/**
+	 * Search the provided grid of characters for the specified word
+	 * 
+	 * @param word
+	 *            The word to search for
+	 * @param originalGrid
+	 *            The grid of characters to search for the word in
+	 * @param row
+	 *            The row to start looking for the word in
+	 * @param col
+	 *            The column to start looking for the word in
+	 * @return The direction which the word for found (in the form of an
+	 *         integer)
+	 */
+	public static int search(String word, char[][] originalGrid, int row, int col) {
 		if (searchLeft(word, originalGrid, row, col)) {
 			return LEFT;
 		} else if (searchRight(word, originalGrid, row, col)) {
@@ -181,109 +272,213 @@ public class WordSearchAlgorithm {
 		} else if (searchDown(word, originalGrid, row, col)) {
 			return DOWN;
 		} else if (searchUpLeft(word, originalGrid, row, col)) {
-			return UP + LEFT;
+			return UP_LEFT;
 		} else if (searchUpRight(word, originalGrid, row, col)) {
-			return UP + RIGHT;
+			return UP_RIGHT;
 		} else if (searchDownLeft(word, originalGrid, row, col)) {
-			return DOWN + LEFT;
+			return DOWN_LEFT;
 		} else if (searchDownRight(word, originalGrid, row, col)) {
-			return DOWN + RIGHT;
+			return DOWN_RIGHT;
 		}
 
-		return FAIL;
+		return NOT_FOUND;
 
 	}
 
-	private static boolean searchUpLeft(String word, char[][] grid, int row, int col) {
+	/**
+	 * Search for the word in the specified direction: Up Left
+	 * 
+	 * @param word
+	 *            The word to search for in the grid
+	 * @param grid
+	 *            The grid of characters to look for the word in
+	 * @param row
+	 *            The row to start looking for the word in
+	 * @param col
+	 *            The column to start looking for the word in
+	 * @return Whether or not the specified word was found
+	 */
+	public static boolean searchUpLeft(String word, char[][] grid, int row, int col) {
 		int length = word.length();
 		if (col - (length - 1) < 0 || row - (length - 1) < 0)
 			return false;
-		for (int i = 1; i < length; i++) {
-			if (word.charAt(i) != grid[row - i][col - i]) {
+		for (int pos = 1; pos < length; pos++) {
+			if (word.charAt(pos) != grid[row - pos][col - pos]) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	private static boolean searchDownRight(String word, char[][] grid, int row, int col) {
+	/**
+	 * Search for the word in the specified direction: Down Right
+	 * 
+	 * @param word
+	 *            The word to search for in the grid
+	 * @param grid
+	 *            The grid of characters to look for the word in
+	 * @param row
+	 *            The row to start looking for the word in
+	 * @param col
+	 *            The column to start looking for the word in
+	 * @return Whether or not the specified word was found
+	 */
+	public static boolean searchDownRight(String word, char[][] grid, int row, int col) {
 		int length = word.length();
 		if (col + (length - 1) >= grid[row].length || row + (length - 1) >= grid.length)
 			return false;
-		for (int i = 1; i < length; i++) {
-			if (word.charAt(i) != grid[row + i][col + i]) {
+		for (int pos = 1; pos < length; pos++) {
+			if (word.charAt(pos) != grid[row + pos][col + pos]) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	private static boolean searchUpRight(String word, char[][] grid, int row, int col) {
+	/**
+	 * Search for the word in the specified direction: Up Right
+	 * 
+	 * @param word
+	 *            The word to search for in the grid
+	 * @param grid
+	 *            The grid of characters to look for the word in
+	 * @param row
+	 *            The row to start looking for the word in
+	 * @param col
+	 *            The column to start looking for the word in
+	 * @return Whether or not the specified word was found
+	 */
+	public static boolean searchUpRight(String word, char[][] grid, int row, int col) {
 		int length = word.length();
 		if (col + (length - 1) >= grid[row].length || row - (length - 1) < 0)
 			return false;
-		for (int i = 1; i < length; i++) {
-			if (word.charAt(i) != grid[row - i][col + i]) {
+		for (int pos = 1; pos < length; pos++) {
+			if (word.charAt(pos) != grid[row - pos][col + pos]) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	private static boolean searchDownLeft(String word, char[][] grid, int row, int col) {
+	/**
+	 * Search for the word in the specified direction: Down Left
+	 * 
+	 * @param word
+	 *            The word to search for in the grid
+	 * @param grid
+	 *            The grid of characters to look for the word in
+	 * @param row
+	 *            The row to start looking for the word in
+	 * @param col
+	 *            The column to start looking for the word in
+	 * @return Whether or not the specified word was found
+	 */
+	public static boolean searchDownLeft(String word, char[][] grid, int row, int col) {
 		int length = word.length();
 		if (col - (length - 1) < 0 || row + (length - 1) >= grid.length)
 			return false;
-		for (int i = 1; i < length; i++) {
-			if (word.charAt(i) != grid[row + i][col - i]) {
+		for (int pos = 1; pos < length; pos++) {
+			if (word.charAt(pos) != grid[row + pos][col - pos]) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	private static boolean searchLeft(String word, char[][] grid, int row, int col) {
+	/**
+	 * Search for the word in the specified direction: Left
+	 * 
+	 * @param word
+	 *            The word to search for in the grid
+	 * @param grid
+	 *            The grid of characters to look for the word in
+	 * @param row
+	 *            The row to start looking for the word in
+	 * @param col
+	 *            The column to start looking for the word in
+	 * @return Whether or not the specified word was found
+	 */
+	public static boolean searchLeft(String word, char[][] grid, int row, int col) {
 		int length = word.length();
 		if (col - (length - 1) < 0)
 			return false;
-		for (int i = 1; i < length; i++) {
-			if (word.charAt(i) != grid[row][col - i]) {
+		for (int pos = 1; pos < length; pos++) {
+			if (word.charAt(pos) != grid[row][col - pos]) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	private static boolean searchRight(String word, char[][] grid, int row, int col) {
+	/**
+	 * Search for the word in the specified direction: Right
+	 * 
+	 * @param word
+	 *            The word to search for in the grid
+	 * @param grid
+	 *            The grid of characters to look for the word in
+	 * @param row
+	 *            The row to start looking for the word in
+	 * @param col
+	 *            The column to start looking for the word in
+	 * @return Whether or not the specified word was found
+	 */
+	public static boolean searchRight(String word, char[][] grid, int row, int col) {
 		int length = word.length();
 		if (col + (length - 1) >= grid[row].length)
 			return false;
-		for (int i = 1; i < length; i++) {
-			if (word.charAt(i) != grid[row][col + i]) {
+		for (int pos = 1; pos < length; pos++) {
+			if (word.charAt(pos) != grid[row][col + pos]) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	private static boolean searchUp(String word, char[][] grid, int row, int col) {
+	/**
+	 * Search for the word in the specified direction: Up
+	 * 
+	 * @param word
+	 *            The word to search for in the grid
+	 * @param grid
+	 *            The grid of characters to look for the word in
+	 * @param row
+	 *            The row to start looking for the word in
+	 * @param col
+	 *            The column to start looking for the word in
+	 * @return Whether or not the specified word was found
+	 */
+	public static boolean searchUp(String word, char[][] grid, int row, int col) {
 		int length = word.length();
 		if (row - (length - 1) < 0)
 			return false;
-		for (int i = 1; i < length; i++) {
-			if (word.charAt(i) != grid[row - i][col]) {
+		for (int pos = 1; pos < length; pos++) {
+			if (word.charAt(pos) != grid[row - pos][col]) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	private static boolean searchDown(String word, char[][] grid, int row, int col) {
+	/**
+	 * Search for the word in the specified direction: Down
+	 * 
+	 * @param word
+	 *            The word to search for in the grid
+	 * @param grid
+	 *            The grid of characters to look for the word in
+	 * @param row
+	 *            The row to start looking for the word in
+	 * @param col
+	 *            The column to start looking for the word in
+	 * @return Whether or not the specified word was found
+	 */
+	public static boolean searchDown(String word, char[][] grid, int row, int col) {
 		int length = word.length();
 		if (row + (length - 1) >= grid.length)
 			return false;
-		for (int i = 1; i < length; i++) {
-			if (word.charAt(i) != grid[row + i][col]) {
+		for (int pos = 1; pos < length; pos++) {
+			if (word.charAt(pos) != grid[row + pos][col]) {
 				return false;
 			}
 		}
