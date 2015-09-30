@@ -20,6 +20,8 @@ public class WordSearchAlgorithm {
 	private static final int UP = 6;
 	private static final int DOWN = 10;
 	private static final int FAIL = 0;
+	private static int wordsFound = 0;
+	private static int wordsNotFound = 0;
 
 	public static void main(String[] args) throws IOException {
 		File file = new File(JOptionPane.showInputDialog("Enter the file name: (include '.txt'): "));
@@ -58,8 +60,11 @@ public class WordSearchAlgorithm {
 			}
 		}
 
+		long timeStart = System.currentTimeMillis();
 		grid = solveWordSearch(grid, words);
 		printGrid(grid);
+		JOptionPane.showMessageDialog(null, "Word Search Solved: \n" + (System.currentTimeMillis() - timeStart) / 1000.0
+				+ " secs\n" + wordsFound + " words were found!\n" + wordsNotFound + " words were NOT found!");
 
 	}
 
@@ -117,8 +122,11 @@ public class WordSearchAlgorithm {
 
 	private static char[][] capitalizeWord(char[][] grid, char[][] originalGrid, int length, int row, int col,
 			int direction) {
-		if (direction == FAIL)
+		if (direction == FAIL) {
+			wordsNotFound++;
 			return grid;
+		}
+		wordsFound++;
 		if (direction == LEFT) {
 			for (int pos = 0; pos < length; pos++) {
 				if (originalGrid[row][col - pos] == grid[row][col - pos])
