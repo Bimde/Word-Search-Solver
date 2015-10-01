@@ -10,7 +10,7 @@ import javax.swing.JOptionPane;
 
 /**
  * Program that solves word search files and outputs the completed word search
- * in a text file of your choice
+ * in a text file of your choice - Partner: Jordan Malek
  * 
  * @author Bimesh De Silva
  * @version September 2015
@@ -18,38 +18,47 @@ import javax.swing.JOptionPane;
  */
 public class WordSearchAlgorithm {
 
-	// Turn on and off status messages (SEVERELY decreases efficiency)
-	private static final boolean DISPLAY_STATUS = true;
+	/**
+	 * Enables or displays output of words being found to the console (SEVERELY
+	 * decreases efficiency)
+	 */
+	private static final boolean DISPLAY_STATUS = false;
 
-	// Static variables to represent directions words could be found in
-	private static final int LEFT = 1;
-	private static final int RIGHT = 2;
-	private static final int UP = 3;
-	private static final int DOWN = 4;
-	private static final int UP_LEFT = 5;
-	private static final int UP_RIGHT = 6;
-	private static final int DOWN_LEFT = 7;
-	private static final int DOWN_RIGHT = 8;
-	private static final int NOT_FOUND = 0;
-
-	// Static variables to keep track of the number of words found and not found
+	/**
+	 * Stores the number of words found by the program
+	 */
 	private static int wordsFound = 0;
-	private static int wordsNotFound = 0;
+
+	// Static variables to represent the directions words could be found in
+	private static final int LEFT = 0;
+	private static final int RIGHT = 1;
+	private static final int UP = 2;
+	private static final int DOWN = 3;
+	private static final int UP_LEFT = 4;
+	private static final int UP_RIGHT = 5;
+	private static final int DOWN_LEFT = 6;
+	private static final int DOWN_RIGHT = 7;
+	private static final int NOT_FOUND = -1;
 
 	public static void main(String[] args) throws IOException {
 
 		// Allow the user to enter the file name
-		File file = new File(JOptionPane.showInputDialog("Enter the file name: (include '.txt'): "));
-		while (file == null || !file.isFile()) {
-			file = new File(JOptionPane
-					.showInputDialog("The file entered was invalid!\nEnter the file name: (include '.txt'): "));
-		}
+		String fileName;
+		File file;
+		do {
+			do {
+				fileName = JOptionPane.showInputDialog("Enter the input file name: (include '.txt'): ");
+			} while (fileName == null || fileName.equals(""));
+
+			file = new File(fileName);
+		} while (!file.exists());
+
+		String output;
+		do {
+			output = JOptionPane.showInputDialog("Enter the name of the desired output file (ex. 'output.txt'): ");
+		} while (output == null || output.equals(""));
+
 		long timeStart = System.currentTimeMillis();
-		String output = JOptionPane.showInputDialog("Enter the name of the desired output file (ex. 'output.txt'): ");
-		while (output == null || output.equals("")) {
-			output = JOptionPane.showInputDialog(
-					"Please enter a valid file name! Enter the name of the desired output file (ex. 'output.txt'): ");
-		}
 		BufferedReader in = new BufferedReader(new FileReader(file));
 
 		// Count the number of words and find the width of the array
@@ -88,17 +97,18 @@ public class WordSearchAlgorithm {
 
 		// Pass the grid and the words to the word search solving method
 		grid = solveWordSearch(grid, words);
-		saveGrid(output, grid);
-		JOptionPane.showMessageDialog(null, "Word Search Solved: \n" + (System.currentTimeMillis() - timeStart) / 1000.0
-				+ " secs\n" + wordsFound + " words were found!\n" + wordsNotFound + " words were NOT found!");
+		saveGrid(output, grid, words);
+		double timeTaken = (System.currentTimeMillis() - timeStart) / 1000.0;
+		JOptionPane.showMessageDialog(null,
+				"Word Search Solved: \n" + timeTaken + " secs\n" + wordsFound + " words were found!");
 
 	}
 
 	/**
-	 * Prints out grid, very useful for debugging purposes
+	 * Prints out grid to console, very useful for debugging purposes
 	 * 
 	 * @param grid
-	 *            The char grid to print out
+	 *            The character grid to print out
 	 */
 	public static void printGrid(char[][] grid) {
 		for (int row = 0; row < grid.length; row++) {
@@ -112,13 +122,22 @@ public class WordSearchAlgorithm {
 	/**
 	 * Saves the grid into a specified output file
 	 * 
+	 * @param fileName
+	 *            The name of the file to be created (including file extension
+	 *            i.e. ".txt")
 	 * @param grid
-	 *            The char grid to print out
+	 *            The 2-D character array to write to the file
+	 * @param words
+	 *            The words to print out at the beginning of the file
 	 * @throws IOException
+	 *             When the a file with the specified name couldn't be created
 	 */
-	public static void saveGrid(String fileName, char[][] grid) throws IOException {
+	public static void saveGrid(String fileName, char[][] grid, String[] words) throws IOException {
 		File file = new File(fileName);
 		PrintWriter writer = new PrintWriter(new FileWriter(file));
+		for (String word : words) {
+			writer.println(word);
+		}
 		for (int row = 0; row < grid.length; row++) {
 			for (int col = 0; col < grid[row].length; col++) {
 				writer.print(grid[row][col] + " ");
@@ -199,10 +218,9 @@ public class WordSearchAlgorithm {
 	 */
 	public static char[][] capitalizeWord(char[][] grid, char[][] originalGrid, int length, int row, int col,
 			int direction) {
-		if (direction == NOT_FOUND) {
-			wordsNotFound++;
+		if (direction == NOT_FOUND)
 			return grid;
-		}
+
 		wordsFound++;
 		if (direction == LEFT) {
 			for (int pos = 0; pos < length; pos++) {
@@ -282,7 +300,6 @@ public class WordSearchAlgorithm {
 		}
 
 		return NOT_FOUND;
-
 	}
 
 	/**
